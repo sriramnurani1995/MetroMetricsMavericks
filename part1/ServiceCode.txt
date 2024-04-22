@@ -1,0 +1,16 @@
+[Unit]
+Description=Pub/Sub Subscriber Service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=srirams
+Group=srirams
+WorkingDirectory=/home/srirams
+Environment="GOOGLE_APPLICATION_CREDENTIALS=/home/srirams/focus-surfer-420318-3dbb00cea7c3.json"
+ExecStart=/usr/bin/python3 /home/srirams/DataEnggProjectSubscriber.py
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
