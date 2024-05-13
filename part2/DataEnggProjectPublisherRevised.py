@@ -53,7 +53,7 @@ def fetch_and_publish_data(vehicle_id):
                 total_messages_sent += 1
             # Wait until all messages are published
             while counter['count'] > 0:
-                pass  # This could be replaced with a more sophisticated waiting mechanism
+                pass 
             print(f"Finished processing vehicle ID {vehicle_id}")
     except urllib.error.URLError as e:
         print(f"Failed to fetch data for vehicle ID {vehicle_id}: {e}")
