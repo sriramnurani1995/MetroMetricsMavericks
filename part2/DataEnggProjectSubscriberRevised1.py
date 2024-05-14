@@ -99,14 +99,13 @@ def cancel_subscription():
             df = df.drop(columns=['OPD_DATE', 'ACT_TIME', 'GPS_SATELLITES', 'GPS_HDOP'])
             df['GPS_LONGITUDE'] = df['GPS_LONGITUDE'].astype(float).fillna(0)
             df['GPS_LATITUDE'] = df['GPS_LATITUDE'].astype(float).fillna(0)
-            print(f"Executing batch insert for {len(df)} records.")
             bulk_insert(df)
             batch_data = []  # Reset the batch data after processing
     try:
         updateforzerolatlong()
         query="select * from TempBreadCrumbs order by event_no_trip,timestamp asc"
         df2=fetch_data_to_dataframe(query)
-        if df2.empty:
+        if not df2.empty:
             checkforAssertions(df2)
             # Speed Transformation
         
@@ -127,7 +126,6 @@ def cancel_subscription():
 
             df2 = df2.groupby('event_no_trip').apply(replace_first_speed)
     
-            print(df2.head)
             checkforTransformedAssertions(df2)
             createUniqueTripRecords()
             df2=df2.drop(['event_no_stop','vehicle_id','meters'], axis=1)
@@ -136,7 +134,6 @@ def cancel_subscription():
             df2.columns = df2.columns.str.replace('gps_longitude', 'longitude')
             df2.columns = df2.columns.str.replace('timestamp', 'tstamp')
             df2.columns = df2.columns.str.replace('SPEED', 'speed')
-            print(df2.head)
             bulk_insert_breadCrumb(df2)
             updatefortruncateTempTable()
         
@@ -147,6 +144,7 @@ def cancel_subscription():
         
 def checkforAssertions(df2):
     try:
+        print("Check For Assertions")
         assert (df2["vehicle_id"] > 0).all(), "Vehicle ID should be positive"
         assert df2["event_no_trip"].between(100000000, 999999999).all(), "EVENT_NO_TRIP should be a positive nine-digit number"
         assert df2["event_no_stop"].between(100000000, 999999999).all(), "EVENT_NO_STOP should be a positive nine-digit number"
@@ -155,12 +153,12 @@ def checkforAssertions(df2):
         assert pd.api.types.is_datetime64_any_dtype(df2['timestamp']), "All entries in 'TIMESTAMP' column must be datetime objects."
         formatted_dates = df2['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S.%f').str[:-3]
         assert formatted_dates is not None ,"Timestamp is in Expected Format"
-        print("Assertion 7: Checking that every record has a stop number.")
+        print("Assertion 8: Checking that every record has a stop number.")
         # Assert that there are no missing values in the 'STOP_NUMBER' column
         assert df2['event_no_stop'].notna().all(), "Some records are missing a stop number!"
         print("All records have a stop number.")
-        print("\nAssertion 8  :Non-Negative Meter Reading")
-        if (df['METERS'] < 0).any():
+        print("\nAssertion 9  :Non-Negative Meter Reading")
+        if (df2['meters'] < 0).any():
             print("Negative values found in METERS!")
         else:
             print("All meter readings are non-negative.")
@@ -196,7 +194,6 @@ def callback(message):
                 df = df.drop(columns=['OPD_DATE', 'ACT_TIME', 'GPS_SATELLITES', 'GPS_HDOP'])
                 df['GPS_LONGITUDE'] = df['GPS_LONGITUDE'].astype(float).fillna(0)
                 df['GPS_LATITUDE'] = df['GPS_LATITUDE'].astype(float).fillna(0)
-                print(f"Executing batch insert for {len(df)} records.")
                 bulk_insert(df)
                 batch_data = []  # Reset the batch data after processing
 
@@ -228,7 +225,6 @@ def bulk_insert(df):
             tuples = [tuple(x) for x in df[expected_cols].to_numpy()]
             cols = ','.join(expected_cols)
             query = "INSERT INTO TempBreadCrumbs (" + cols + ") VALUES %s"
-            print(f"Executing batch insert for {len(tuples)} records.")
             psycopg2.extras.execute_values(cur, query, tuples)
             conn.commit()
     except Exception as e:
@@ -253,7 +249,6 @@ def bulk_insert_breadCrumb(df):
             tuples = [tuple(x) for x in df[expected_cols].to_numpy()]
             cols = ','.join(expected_cols)
             query = "INSERT INTO BreadCrumb (" + cols + ") VALUES %s"
-            print(f"Executing batch insert for {len(tuples)} records.")
             psycopg2.extras.execute_values(cur, query, tuples)
             conn.commit()
     except Exception as e:
