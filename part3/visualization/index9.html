@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Maps GeoJSON Example</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <style>
+        /* Always set the map height explicitly to define the size of the div
+         * element that contains the map. */
+        #map {
+            height: 100%;
+        }
+        /* Optional: Makes the sample page fill the window. */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+    function initMap() {
+        // Create the map.
+        var map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 11,
+            center: {lat: 45.5122, lng: -122.6587}
+        });
+
+        // Load the GeoJSON.
+        map.data.loadGeoJson('data8.geojson');
+
+        // Set the style for each feature in the GeoJSON file
+        map.data.setStyle(function(feature) {
+            var value = feature.getProperty('speed');
+            var color = getColor(value);
+            return {
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 5,
+                    fillColor: color,
+                    fillOpacity: 1,
+                    strokeColor: 'black',
+                    strokeWeight: 1
+                }
+            };
+        });
+
+        // Function to determine the color based on value
+        function getColor(value) {
+            return value >= 20 ? 'rgb(4, 244, 32)' :
+                   value >= 15 ? 'rgb(249, 249, 71)' :
+                   value >= 10 ? 'rgb(245, 183, 121)' :
+                   value >= 7  ? 'rgb(209, 83, 4)' :
+                   value >= 4  ? 'rgb(244, 32, 4)' :
+                                 'rgb(244, 32, 4)';
+        }
+    }
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDQvtproZDzucwpgQ9HCCLtX1oaPlMCUUE&callback=initMap"
+        async defer></script>
+</body>
+</html>
